@@ -1,9 +1,8 @@
-"""
-Farm Sensor Monitoring System
-This program simulates a farm with 10 sensors spread across different zones.
-Each sensor tracks moisture, temperature, and rainfall. We analyze the data
-to tell the farmer which areas need water and which might be getting too much.
-"""
+
+#Farm Sensor Monitoring System
+#This program simulates a farm with 10 sensors spread across different zones.
+#Each sensor tracks moisture, temperature, and rainfall. We analyze the data
+#to tell the farmer which areas need water and which might be getting too much.
 
 import random  # generates random sensor readings for cycles 2 and 3
 
