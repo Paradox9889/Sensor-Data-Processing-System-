@@ -1,0 +1,38 @@
+================================================================================
+  DAILY SUMMARY REPORT — JKUAT RESEARCH FARM
+  Date     : 2026-05-09
+  Location : Juja, Kiambu County, Kenya
+================================================================================
+
+  Total Sensors   : 21
+  Total Alerts    : 6
+  Total Warnings  : 6
+  Total Normal    : 9
+
+  SENSOR BREAKDOWN:
+  ----------------------------------------------------------------------
+  SNS-M01      | North Field A        | WARNING  | DRY — schedule irrigation within 24hrs
+  SNS-M02      | North Field B        | ALERT    | CRITICAL DRY — irrigate immediately
+  SNS-M03      | East Greenhouse      | NORMAL   | OPTIMAL — conditions good
+  SNS-M04      | East Orchard         | NORMAL   | OPTIMAL — conditions good
+  SNS-M05      | Central Paddock      | WARNING  | WET — monitor drainage
+  SNS-M06      | Central Nursery      | WARNING  | DRY — schedule irrigation within 24hrs
+  SNS-M07      | West Cropland        | NORMAL   | OPTIMAL — conditions good
+  SNS-M08      | West Pasture         | ALERT    | WATERLOGGED — activate drainage
+  SNS-M09      | South Wetland        | ALERT    | CRITICAL DRY — irrigate immediately
+  SNS-M10      | South Dryland        | FAULTY   | 
+  SNS-T01      | North Field A        | NORMAL   | OPTIMAL — ideal temperature
+  SNS-T02      | East Greenhouse      | NORMAL   | OPTIMAL — ideal temperature
+  SNS-T03      | Central Paddock      | WARNING  | WARM — monitor crop stress
+  SNS-T04      | West Cropland        | ALERT    | HEAT STRESS — crops at risk
+  SNS-T05      | South Wetland        | NORMAL   | OPTIMAL — ideal temperature
+  SNS-T06      | South Dryland        | ALERT    | HEAT STRESS — crops at risk
+  SNS-P01      | North Field A        | NORMAL   | OPTIMAL — ideal for crops
+  SNS-P02      | East Orchard         | WARNING  | ACIDIC — consider lime treatment
+  SNS-P03      | Central Nursery      | WARNING  | ALKALINE — nutrient availability reduced
+  SNS-P04      | West Cropland        | NORMAL   | OPTIMAL — ideal for crops
+  SNS-P05      | South Dryland        | ALERT    | HIGHLY ALKALINE — soil amendment required
+
+================================================================================
+  END OF DAILY SUMMARY
+================================================================================

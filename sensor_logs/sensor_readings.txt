@@ -1,0 +1,28 @@
+================================================================================
+  SENSOR DATA PROCESSING SYSTEM — READINGS LOG
+  Generated: 2026-05-09 13:55:32.789220
+  Farm: JKUAT Research Farm, Juja, Kenya
+================================================================================
+TIMESTAMP            | SENSOR ID  | ZONE               | TYPE        | READING    | STATUS  | ASSESSMENT
+--------------------------------------------------------------------------------
+2024-05-01 06:00 | SNS-M01 | North Field A | MOISTURE | 0.32 VWC | WARNING | DRY — schedule irrigation within 24hrs
+2024-05-01 06:00 | SNS-M02 | North Field B | MOISTURE | 0.15 VWC | ALERT | CRITICAL DRY — irrigate immediately
+2024-05-01 06:00 | SNS-M03 | East Greenhouse | MOISTURE | 0.61 VWC | NORMAL | OPTIMAL — conditions good
+2024-05-01 06:00 | SNS-M04 | East Orchard | MOISTURE | 0.44 VWC | NORMAL | OPTIMAL — conditions good
+2024-05-01 06:00 | SNS-M05 | Central Paddock | MOISTURE | 0.72 VWC | WARNING | WET — monitor drainage
+2024-05-01 06:00 | SNS-M06 | Central Nursery | MOISTURE | 0.28 VWC | WARNING | DRY — schedule irrigation within 24hrs
+2024-05-01 06:00 | SNS-M07 | West Cropland | MOISTURE | 0.53 VWC | NORMAL | OPTIMAL — conditions good
+2024-05-01 06:00 | SNS-M08 | West Pasture | MOISTURE | 0.81 VWC | ALERT | WATERLOGGED — activate drainage
+2024-05-01 06:00 | SNS-M09 | South Wetland | MOISTURE | 0.13 VWC | ALERT | CRITICAL DRY — irrigate immediately
+2024-05-01 06:00 | SNS-M10 | South Dryland | MOISTURE | 1.45 VWC | FAULTY | 
+2024-05-01 06:00 | SNS-T01 | North Field A | TEMPERATURE | 24.3 °C | NORMAL | OPTIMAL — ideal temperature
+2024-05-01 06:00 | SNS-T02 | East Greenhouse | TEMPERATURE | 22.1 °C | NORMAL | OPTIMAL — ideal temperature
+2024-05-01 06:00 | SNS-T03 | Central Paddock | TEMPERATURE | 31.7 °C | WARNING | WARM — monitor crop stress
+2024-05-01 06:00 | SNS-T04 | West Cropland | TEMPERATURE | 36.8 °C | ALERT | HEAT STRESS — crops at risk
+2024-05-01 06:00 | SNS-T05 | South Wetland | TEMPERATURE | 28.4 °C | NORMAL | OPTIMAL — ideal temperature
+2024-05-01 06:00 | SNS-T06 | South Dryland | TEMPERATURE | 38.5 °C | ALERT | HEAT STRESS — crops at risk
+2024-05-01 06:00 | SNS-P01 | North Field A | PH | 6.2 pH | NORMAL | OPTIMAL — ideal for crops
+2024-05-01 06:00 | SNS-P02 | East Orchard | PH | 4.8 pH | WARNING | ACIDIC — consider lime treatment
+2024-05-01 06:00 | SNS-P03 | Central Nursery | PH | 7.1 pH | WARNING | ALKALINE — nutrient availability reduced
+2024-05-01 06:00 | SNS-P04 | West Cropland | PH | 5.9 pH | NORMAL | OPTIMAL — ideal for crops
+2024-05-01 06:00 | SNS-P05 | South Dryland | PH | 8.1 pH | ALERT | HIGHLY ALKALINE — soil amendment required

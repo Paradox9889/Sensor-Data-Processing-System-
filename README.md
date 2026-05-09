@@ -51,7 +51,7 @@ Each variable in the program represents a real agricultural parameter:
 | `status` | Operational state of the sensor: ACTIVE, NORMAL, WARNING, ALERT, FAULTY, OFFLINE |
 
 ### Moisture Classification Thresholds
-Based on KALRO (Kenya Agricultural & Livestock Research Organization) field sensor data:
+Based on field sensor data:
 
 | Range | Classification | Action |
 |-------|---------------|--------|
@@ -88,9 +88,6 @@ Based on Embu County, Kenya smallholder farm sensor study:
 ## 4. DATA SOURCES
 
 Sensor values used throughout the system are based on real agricultural data:
-
-- **KALRO (Kenya Agricultural & Livestock Research Organization)**
-  Soil sensor deployments in Kajiado and Tharaka sub-counties, Kenya
 
 - **Embu County Smallholder Farm Sensor Study**
   Sensor performance evaluation in Kenyan smallholder farms
@@ -234,7 +231,7 @@ The abstract base class `Sensor` uses Python's ABC module and defines two abstra
 — `get_reading()` and `process_reading()` — that every subclass must implement.
 
 #### MoistureSensor
-Measures volumetric soil water content. Uses KALRO Kenya moisture thresholds.
+Measures volumetric soil water content.
 10 sensors deployed across all farm zones.
 
 #### TemperatureSensor

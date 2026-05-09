@@ -13,8 +13,6 @@ class Sensor(ABC):
     Defines the shared structure and interface that every
     sensor subclass must follow. Cannot be instantiated
     directly — you must use a specific sensor subclass.
-
-    Data source: KALRO Kenya field sensor program structure
     """
 
     def __init__(self, sensor_id, zone, timestamp):
@@ -84,7 +82,7 @@ class MoistureSensor(Sensor):
     """
     Measures volumetric soil water content.
 
-    Real-world range from KALRO Kenya sensor deployments:
+    Real-world range from sensor deployments:
     Dry season: 0.12 - 0.35
     Wet season : 0.45 - 0.78
     Scale: 0.0 (bone dry) to 1.0 (fully saturated)
@@ -104,7 +102,6 @@ class MoistureSensor(Sensor):
     def process_reading(self):
         """
         Classifies moisture level using real Kenyan farm thresholds.
-        Thresholds sourced from KALRO and TAMSAT Kenya dataset.
         """
         m = self.__moisture
 
@@ -114,7 +111,7 @@ class MoistureSensor(Sensor):
 
         elif m < 0.20:
             self._status = "ALERT"
-            return "CRITICAL DRY — irrigate immediately (KALRO threshold)"
+            return "CRITICAL DRY — irrigate immediately"
 
         elif m < 0.35:
             self._status = "WARNING"
