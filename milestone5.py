@@ -2,6 +2,9 @@ import threading
 import time
 from enum import Enum
 
+# >>> ENUMERATIONS: Replace raw strings with fixed set of valid states
+# >>> SensorState enum catches invalid states immediately as errors
+
 
 class SensorState(Enum):
     """Enumeration of all valid sensor operational states."""
@@ -22,13 +25,15 @@ class SensorType(Enum):
 
 # Shared resources and synchronization locks
 results_list = []
-results_lock = threading.Lock()
-print_lock = threading.Lock()
+results_lock = threading.Lock()   # >>> THREAD LOCK: Prevents race conditions
+print_lock = threading.Lock()     # >>> Only one thread writes at a time
 log_lock = threading.Lock()
 
 
 class Sensor(threading.Thread):
     """A sensor that runs as its own independent thread."""
+    # >>> MULTITHREADING: Each sensor runs in its own thread
+    # >>> All 21 threads start concurrently, not sequentially
 
     def __init__(self, sensor_id, zone, sensor_type, reading, unit, timestamp):
         super().__init__()
@@ -159,6 +164,8 @@ class Sensor(threading.Thread):
 
 def apply_filter(results, filter_func):
     """Applies a lambda filter function to the results list."""
+    # >>> LAMBDA EXPRESSIONS: Anonymous functions for functional filtering
+    # >>> Filter results after all threads complete
     return list(filter(filter_func, results))
 
 
@@ -199,6 +206,8 @@ if __name__ == "__main__":
     for sensor in sensor_threads:
         sensor.start()
 
+    # >>> THREAD SYNCHRONIZATION: join() waits for all 21 threads
+    # >>> Ensures all results are collected before filtering
     for sensor in sensor_threads:
         sensor.join()
 
