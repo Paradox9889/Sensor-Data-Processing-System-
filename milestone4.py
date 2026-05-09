@@ -8,8 +8,8 @@ import datetime                       # for real timestamps on logs
 # Modular sensor system with exception handling and file persistence
 # Custom exceptions provide specific error types for different failure scenarios
 
-
-
+# >>> CUSTOM EXCEPTIONS: Specific exception types for different errors
+# >>> Replaces simple if/else with typed exception handling
 class SensorException(Exception):
     """Base exception for all sensor system errors."""
     pass
@@ -27,8 +27,8 @@ class FileLoggingError(SensorException):
     pass
 
 
-
-
+# >>> INTERFACES: IReadable and ILoggable enforce contracts
+# >>> Sensor class implements both — get_reading(), validate(), log_to_file()
 class IReadable(ABC):
     """
     Interface for any component that provides sensor readings.
@@ -84,8 +84,8 @@ class Sensor(IReadable, ILoggable):
         Raises specific custom exceptions for different error types.
         This replaces the simple if/else validation from Milestone 2.
         """
-        # Exception handling: catches specific error types and responds appropriately
-        # Three exception types: SensorOfflineError, InvalidReadingError, generic Exception
+        # >>> EXCEPTION HANDLING: Try-except catches specific error types
+        # >>> SensorOfflineError, InvalidReadingError each handled separately
         try:
             # Check if the sensor is even online
             if self.__reading is None:
@@ -247,8 +247,7 @@ class FileLogger(ILoggable):
     Implements ILoggable interface.
     """
     # Dedicated module for file I/O — separates concerns from sensor logic
-    # Creates three log files: readings (all data), alerts (critical only), summary (daily report)
-
+    # >>> THREE LOG FILES: sensor_readings.txt, alerts.txt, daily_summary.txt
     def __init__(self, log_directory):
         self.__log_dir        = log_directory
         self.__readings_file  = os.path.join(log_directory, "sensor_readings.txt")
@@ -390,7 +389,8 @@ class SensorNetwork:
     This is the modular architecture in action — each concern
     is handled by a dedicated, specialized module.
     """
-    # SensorNetwork orchestrates the full system: registers sensors, processes readings, delegates logging
+    # >>> MODULAR ARCHITECTURE: SensorNetwork orchestrates Sensor + FileLogger
+    # >>> Separation of concerns — each class handles one responsibility
 
     def __init__(self, network_name, location, logger):
         self.__name     = network_name
@@ -413,10 +413,8 @@ class SensorNetwork:
         Processes every sensor, logs each result, collects alerts.
         Demonstrates the full exception handling framework in action.
         """
-        # Exception handling: catches sensor-specific and unexpected errors
-        # System continues processing even if individual sensors fail
-        # Exception handling: catches sensor-specific and unexpected errors
-        # System continues processing even if individual sensors fail
+        # >>> EXCEPTION HANDLING IN ACTION: Try-except wraps entire loop
+        # >>> System continues processing even if individual sensors fail
         print(f"\n{'=' * 65}")
         print(f"  SENSOR NETWORK: {self.__name}")
         print(f"  LOCATION      : {self.__location}")
@@ -513,7 +511,7 @@ sensors_data = [
     ("SNS-M07", "West Cropland",    "MOISTURE",    0.53, "VWC", "2024-05-01 06:00"),
     ("SNS-M08", "West Pasture",     "MOISTURE",    0.81, "VWC", "2024-05-01 06:00"),
     ("SNS-M09", "South Wetland",    "MOISTURE",    0.13, "VWC", "2024-05-01 06:00"),
-    ("SNS-M10", "South Dryland",    "MOISTURE",    1.45, "VWC", "2024-05-01 06:00"),  # faulty
+    ("SNS-M10", "South Dryland",    "MOISTURE",    1.45, "VWC", "2024-05-01 06:00"),  # >>> FAULTY: 1.45 exceeds valid range 0.0-1.0
     ("SNS-T01", "North Field A",    "TEMPERATURE", 24.3, "°C",  "2024-05-01 06:00"),
     ("SNS-T02", "East Greenhouse",  "TEMPERATURE", 22.1, "°C",  "2024-05-01 06:00"),
     ("SNS-T03", "Central Paddock",  "TEMPERATURE", 31.7, "°C",  "2024-05-01 06:00"),

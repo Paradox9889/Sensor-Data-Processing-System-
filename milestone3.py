@@ -5,8 +5,7 @@ from abc import ABC, abstractmethod
 # Three sensor types (Moisture, Temperature, pH) inherit from abstract base class
 # System manages farm sensor network and classifies readings based on real Kenyan farm thresholds
 
-
-
+# >>> ABSTRACTION: Abstract Base Class
 class Sensor(ABC):
     """
     Abstract base class for all sensor types in the system.
@@ -46,6 +45,8 @@ class Sensor(ABC):
         verbose=True  → detailed multi-line summary
         This simulates method overloading using default parameters.
         """
+        # >>> METHOD OVERLOADING: Same method, different behavior via parameter
+        # >>> verbose=False for compact, verbose=True for detailed
         if verbose:
             # Long-form detailed summary
             return (
@@ -95,6 +96,7 @@ class MoistureSensor(Sensor):
         self.__moisture = moisture   # the actual moisture reading
         self._unit      = "VWC"      # volumetric water content unit
 
+    # >>> POLYMORPHISM: Override abstract methods
     def get_reading(self):
         # Return this sensor's specific measurement
         return self.__moisture
@@ -130,7 +132,7 @@ class MoistureSensor(Sensor):
             self._status = "ALERT"
             return "WATERLOGGED — activate drainage system"
 
-
+# >>> INHERITANCE & POLYMORPHISM: TemperatureSensor
 class TemperatureSensor(Sensor):
     """
     Measures air and soil surface temperature in Celsius.
@@ -180,7 +182,7 @@ class TemperatureSensor(Sensor):
             self._status = "ALERT"
             return "HEAT STRESS — critical temperature, crops at risk"
 
-
+# >>> INHERITANCE & POLYMORPHISM: PHSensor
 class PHSensor(Sensor):
     """
     Measures soil pH (acidity/alkalinity).
@@ -241,8 +243,8 @@ class SensorDataset:
     and provides statistical analysis across the full dataset.
     Includes recursive anomaly detection.
     """
-    # This class demonstrates array operations, string formatting,
-    # and statistical computation across a sensor network
+    # >>> EXPANDED NETWORK: 21 sensors (10 moisture, 6 temperature, 5 pH)
+    # >>> Manages as structured dataset with statistical analysis
 
     def __init__(self, dataset_name, location):
         self.__name     = dataset_name   # name of this dataset
@@ -349,8 +351,8 @@ class SensorDataset:
         Base case  : index reaches end of sensors list → return results
         Recursive  : process sensor at current index, move to next
         """
-        # Recursion: breaks down problem into smaller subproblems
-        # Base case prevents infinite recursion
+        # >>> RECURSION: Processes one sensor per call, recurses until all done
+        # >>> Base case: index >= len(sensors) returns anomalies list
         # Initialize anomalies list on first call
         if anomalies is None:
             anomalies = []
