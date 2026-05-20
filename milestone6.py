@@ -3,6 +3,8 @@ from tkinter import ttk
 import threading
 import time
 from enum import Enum
+from kaggle_loader import load_kaggle_sensors
+from collections import defaultdict
 
 
 class SensorState(Enum):
@@ -11,6 +13,7 @@ class SensorState(Enum):
     WARNING = 3
     ALERT   = 4
     FAULTY  = 5
+    OFFLINE = 6
 
 
 class SensorType(Enum):
@@ -118,171 +121,112 @@ class Sensor:
     def get_assessment(self): return self.__assessment
 
 
-def create_sensors():
-    """Creates all 21 sensors with real Kenyan farm values."""
-    return [
-        Sensor("SNS-M01", "North Field A",   SensorType.MOISTURE,    0.32, "VWC"),
-        Sensor("SNS-M02", "North Field B",   SensorType.MOISTURE,    0.15, "VWC"),
-        Sensor("SNS-M03", "East Greenhouse", SensorType.MOISTURE,    0.61, "VWC"),
-        Sensor("SNS-M04", "East Orchard",    SensorType.MOISTURE,    0.44, "VWC"),
-        Sensor("SNS-M05", "Central Paddock", SensorType.MOISTURE,    0.72, "VWC"),
-        Sensor("SNS-M06", "Central Nursery", SensorType.MOISTURE,    0.28, "VWC"),
-        Sensor("SNS-M07", "West Cropland",   SensorType.MOISTURE,    0.53, "VWC"),
-        Sensor("SNS-M08", "West Pasture",    SensorType.MOISTURE,    0.81, "VWC"),
-        Sensor("SNS-M09", "South Wetland",   SensorType.MOISTURE,    0.13, "VWC"),
-        Sensor("SNS-M10", "South Dryland",   SensorType.MOISTURE,    1.45, "VWC"),
-        Sensor("SNS-T01", "North Field A",   SensorType.TEMPERATURE, 24.3, "C"),
-        Sensor("SNS-T02", "East Greenhouse", SensorType.TEMPERATURE, 22.1, "C"),
-        Sensor("SNS-T03", "Central Paddock", SensorType.TEMPERATURE, 31.7, "C"),
-        Sensor("SNS-T04", "West Cropland",   SensorType.TEMPERATURE, 36.8, "C"),
-        Sensor("SNS-T05", "South Wetland",   SensorType.TEMPERATURE, 28.4, "C"),
-        Sensor("SNS-T06", "South Dryland",   SensorType.TEMPERATURE, 38.5, "C"),
-        Sensor("SNS-P01", "North Field A",   SensorType.PH,          6.2,  "pH"),
-        Sensor("SNS-P02", "East Orchard",    SensorType.PH,          4.8,  "pH"),
-        Sensor("SNS-P03", "Central Nursery", SensorType.PH,          7.1,  "pH"),
-        Sensor("SNS-P04", "West Cropland",   SensorType.PH,          5.9,  "pH"),
-        Sensor("SNS-P05", "South Dryland",   SensorType.PH,          8.1,  "pH"),
-    ]
-
-
-# >>> GUI APPLICATION: Tkinter-based dashboard
-# >>> Event-driven programming with color-coded table display
 class FarmDashboard:
-    """GUI dashboard for JKUAT Research Farm sensor network."""
-    # >>> EVENT-DRIVEN PROGRAMMING: Wait for user interactions
-    # >>> Nothing happens until user clicks a button
+    """GUI dashboard with grouped, expandable table structure for 3000+ sensors."""
 
     ROW_COLORS = {
         "NORMAL" : "#d4edda",
         "WARNING": "#fff3cd",
         "ALERT"  : "#f8d7da",
         "FAULTY" : "#e2e3e5",
-        "ACTIVE" : "#ffffff",
+    }
+
+    GROUP_COLORS = {
+        "ALERT"  : "#d32f2f",
+        "WARNING": "#f57c00",
+        "NORMAL" : "#388e3c",
+        "FAULTY" : "#757575",
     }
 
     def __init__(self, root):
-        self.root    = root
+        self.root = root
         self.running = False
+        self.expanded_groups = {"ALERT": True, "WARNING": True, "NORMAL": False, "FAULTY": False}
+        self.group_data = {"ALERT": [], "WARNING": [], "NORMAL": [], "FAULTY": []}
 
-        self.root.title("Sensor Data Processing System — JKUAT Research Farm")
-        self.root.geometry("950x620")
-        self.root.configure(bg="#f0f0f0")
+        self.root.title("SMART FARM MONITORING DASHBOARD - 3000 SENSORS")
+        self.root.geometry("1100x700")
+        self.root.configure(bg="#f5f5f5")
         self.root.resizable(True, True)
 
         self.__build_header()
-        self.__build_buttons()
+        self.__build_alert_section()
         self.__build_table()
         self.__build_summary()
+        add_control_buttons(self)
 
     def __build_header(self):
-        frame = tk.Frame(self.root, bg="#2c3e50", pady=10)
+        frame = tk.Frame(self.root, bg="#1565c0", pady=15)
         frame.pack(fill="x")
-        # >>> GUI SECTION 1: Header with farm name and university info
 
         tk.Label(
             frame,
-            text="SENSOR DATA PROCESSING SYSTEM",
-            font=("Helvetica", 16, "bold"),
-            fg="white", bg="#2c3e50"
+            text="SMART FARM MONITORING SYSTEM",
+            font=("Arial", 18, "bold"),
+            fg="white", bg="#1565c0"
         ).pack()
 
         tk.Label(
             frame,
-            text="JKUAT Research Farm  |  Juja, Kiambu County, Kenya",
-            font=("Helvetica", 10),
-            fg="#bdc3c7", bg="#2c3e50"
+            text="Decision Support for Agricultural Management",
+            font=("Arial", 10),
+            fg="#b3e5fc", bg="#1565c0"
         ).pack()
+
+    def __build_alert_section(self):
+        """Critical alerts section."""
+        frame = tk.Frame(self.root, bg="#fff3e0", relief="solid", bd=1)
+        frame.pack(fill="x", padx=15, pady=10)
 
         tk.Label(
             frame,
-            text="ICS 2276 Computer Programming II  |  Group 3  |  BSc. Agricultural & Biosystems Engineering",
-            font=("Helvetica", 9),
-            fg="#95a5a6", bg="#2c3e50"
-        ).pack()
+            text="CRITICAL ALERTS - NEED IMMEDIATE ACTION REQUIRED",
+            font=("Arial", 11, "bold"),
+            fg="#d32f2f", bg="#fff3e0"
+        ).pack(anchor="w", padx=10, pady=5)
 
-    def __build_buttons(self):
-        frame = tk.Frame(self.root, bg="#f0f0f0", pady=8)
-        frame.pack(fill="x", padx=15)
-        # >>> GUI SECTION 2: Event handlers for user button clicks
-
-        # >>> EVENT-DRIVEN: Button click calls __on_run_clicked handler
-        self.run_btn = tk.Button(
+        self.alert_text = tk.Text(
             frame,
-            text="Run Simulation",
-            font=("Helvetica", 11, "bold"),
-            bg="#27ae60", fg="white",
-            activebackground="#1e8449",
-            relief="flat", padx=20, pady=6,
-            cursor="hand2",
-            command=self.__on_run_clicked
+            height=3,
+            font=("Courier", 9),
+            bg="#fff9e6",
+            relief="flat",
+            state="disabled"
         )
-        self.run_btn.pack(side="left", padx=(0, 8))
-
-        # >>> EVENT-DRIVEN: Button click calls __on_clear_clicked handler
-        tk.Button(
-            frame,
-            text="Clear",
-            font=("Helvetica", 11),
-            bg="#c0392b", fg="white",
-            activebackground="#a93226",
-            relief="flat", padx=20, pady=6,
-            cursor="hand2",
-            command=self.__on_clear_clicked
-        ).pack(side="left")
-
-        self.status_lbl = tk.Label(
-            frame,
-            text="Ready. Press Run Simulation to start.",
-            font=("Helvetica", 10),
-            fg="#7f8c8d", bg="#f0f0f0"
-        )
-        self.status_lbl.pack(side="left", padx=16)
+        self.alert_text.pack(fill="both", expand=True, padx=10, pady=5)
 
     def __build_table(self):
-        """Color-coded table displays all 21 sensor results."""
-        # >>> GUI SECTION 3: Treeview table with color-coded rows
-        # >>> Green=NORMAL, Yellow=WARNING, Red=ALERT, Grey=FAULTY
-        frame = tk.Frame(self.root, bg="#f0f0f0")
+        """Grouped, expandable table by sensor status."""
+        frame = tk.Frame(self.root, bg="#f5f5f5")
         frame.pack(fill="both", expand=True, padx=15, pady=(0, 8))
 
-        scrollbar = ttk.Scrollbar(frame, orient="vertical")
+        # Canvas with scrollbar for table
+        self.table_frame = tk.Frame(frame, bg="#f5f5f5")
+        self.table_frame.pack(fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(self.table_frame, orient="vertical")
         scrollbar.pack(side="right", fill="y")
 
-        # >>> TREEVIEW: Tkinter table widget for displaying sensor data
-        columns = ("id", "zone", "type", "reading", "state", "assessment")
-        self.table = ttk.Treeview(
-            frame,
-            columns=columns,
-            show="headings",
-            yscrollcommand=scrollbar.set,
-            height=18
+        self.canvas = tk.Canvas(
+            self.table_frame,
+            bg="#f5f5f5",
+            highlightthickness=0,
+            yscrollcommand=scrollbar.set
         )
-        scrollbar.config(command=self.table.yview)
+        scrollbar.config(command=self.canvas.yview)
+        self.canvas.pack(side="left", fill="both", expand=True)
 
-        self.table.heading("id",         text="Sensor ID")
-        self.table.heading("zone",       text="Farm Zone")
-        self.table.heading("type",       text="Type")
-        self.table.heading("reading",    text="Reading")
-        self.table.heading("state",      text="State")
-        self.table.heading("assessment", text="Assessment")
-
-        self.table.column("id",         width=90,  anchor="w")
-        self.table.column("zone",       width=145, anchor="w")
-        self.table.column("type",       width=95,  anchor="w")
-        self.table.column("reading",    width=80,  anchor="w")
-        self.table.column("state",      width=80,  anchor="w")
-        self.table.column("assessment", width=350, anchor="w")
-
-        # >>> COLOR-CODED ROWS: Each state gets a background color
-        for state, color in self.ROW_COLORS.items():
-            self.table.tag_configure(state, background=color)
-
-        self.table.pack(fill="both", expand=True)
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#f5f5f5")
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
 
     def __build_summary(self):
+        """KPI footer with sensor counts."""
         frame = tk.Frame(self.root, bg="#2c3e50", pady=8)
         frame.pack(fill="x")
-        # >>> GUI SECTION 4: Summary bar shows counts after simulation
 
         self.lbl_total    = self.__summary_label(frame, "Total Sensors : —")
         self.lbl_alerts   = self.__summary_label(frame, "Alerts : —")
@@ -303,44 +247,54 @@ class FarmDashboard:
         return lbl
 
     def __on_run_clicked(self):
-        """EVENT HANDLER: Run Simulation button."""
-        # >>> EVENT HANDLER: User clicks Run Simulation
-        # >>> Triggers concurrent processing of all 21 sensors
+        """Run analysis button handler."""
         if self.running:
             return
 
         self.running = True
         self.__clear_table()
-        self.run_btn.config(state="disabled", text="Processing...")
-        self.status_lbl.config(text="Running simulation — processing 21 sensors concurrently...")
+        self.run_btn.config(state="disabled", text="ANALYZING...")
+        self.status_lbl.config(text="Processing 3000 sensors from Kaggle dataset concurrently...")
 
-        # >>> BACKGROUND THREAD: Keeps GUI responsive during processing
-        # >>> Without background thread, window would freeze
-        t = threading.Thread(target=self.__run_simulation)
+        t = threading.Thread(target=self.__run_analysis)
         t.daemon = True
         t.start()
 
     def __on_clear_clicked(self):
-        """EVENT HANDLER: Clear button."""
+        """Clear button handler."""
         self.__clear_table()
         self.__reset_summary()
-        self.status_lbl.config(text="Cleared. Press Run Simulation to start again.")
+        self.status_lbl.config(text="Cleared. Press RUN ANALYSIS to start.")
+        self.group_data = {"ALERT": [], "WARNING": [], "NORMAL": [], "FAULTY": []}
 
-    def __run_simulation(self):
-        """Runs in background thread: process all 21 sensors concurrently."""
-        # >>> CONCURRENT PROCESSING: Same multithreading as Milestone 5
-        # >>> One thread per sensor, all run in parallel
-        sensors = create_sensors()
+    def __run_analysis(self):
+        """Background thread: Load and process 3000 sensors."""
+        # Load 1000 Kaggle records = 3000 sensors (3 types per record)
+        kaggle_sensor_data = load_kaggle_sensors(limit=1000)
+        
+        if not kaggle_sensor_data:
+            self.root.after(0, lambda: self.__handle_error("Failed to load Kaggle dataset"))
+            return
+        
+        sensors = [
+            Sensor(
+                s["sensor_id"],
+                s["zone"],
+                SensorType[s["sensor_type"]],
+                s["reading"],
+                s["unit"]
+            )
+            for s in kaggle_sensor_data
+        ]
+        
         results = []
-        lock    = threading.Lock()
+        lock = threading.Lock()
 
         def process_one(sensor):
-            time.sleep(0.02)
             sensor.process()
             with lock:
                 results.append(sensor)
 
-        # >>> MULTITHREADING: One thread per sensor, all run concurrently
         threads = []
         for sensor in sensors:
             t = threading.Thread(target=process_one, args=(sensor,))
@@ -350,62 +304,203 @@ class FarmDashboard:
         for t in threads:
             t.join()
 
-        # >>> THREAD-SAFE GUI UPDATE: root.after() schedules on main thread
-        # >>> Cannot update GUI directly from background thread
-        self.root.after(0, lambda: self.__update_display(results))
+        self.root.after(0, lambda: self.__display_results(results))
 
-    def __update_display(self, results):
-        """Updates table and summary with simulation results."""
-        for sensor in results:
-            self.table.insert(
-                "", "end",
-                values=(
-                    sensor.get_sensor_id(),
-                    sensor.get_zone(),
-                    sensor.get_type(),
-                    f"{sensor.get_reading()} {sensor.get_unit()}",
-                    sensor.get_state_name(),
-                    sensor.get_assessment()
-                ),
-                tags=(sensor.get_state_name(),)
-            )
-
-        alerts   = [s for s in results if s.get_state() == SensorState.ALERT]
-        warnings = [s for s in results if s.get_state() == SensorState.WARNING]
-        normal   = [s for s in results if s.get_state() == SensorState.NORMAL]
-        faulty   = [s for s in results if s.get_state() == SensorState.FAULTY]
-
-        moist = [
-            s for s in results
-            if s.get_type() == "MOISTURE" and s.get_state() != SensorState.FAULTY
-        ]
-        avg_m = sum(s.get_reading() for s in moist) / len(moist) if moist else 0
-
-        self.lbl_total.config(   text=f"Total Sensors : {len(results)}")
-        self.lbl_alerts.config(  text=f"Alerts : {len(alerts)}")
-        self.lbl_warnings.config(text=f"Warnings : {len(warnings)}")
-        self.lbl_normal.config(  text=f"Normal : {len(normal)}")
-        self.lbl_faulty.config(  text=f"Faulty : {len(faulty)}")
-        self.lbl_moisture.config(text=f"Avg Moisture : {avg_m:.3f} VWC")
-
-        self.status_lbl.config(
-            text=f"Simulation complete — {len(results)} sensors processed."
-        )
-
-        self.run_btn.config(state="normal", text="Run Simulation")
+    def __handle_error(self, msg):
+        """Handle errors."""
+        self.status_lbl.config(text=f"ERROR: {msg}")
+        self.run_btn.config(state="normal", text="RUN ANALYSIS")
         self.running = False
 
+    def __display_results(self, results):
+        """Display results organized by status groups."""
+        # Group sensors by status
+        self.group_data = {"ALERT": [], "WARNING": [], "NORMAL": [], "FAULTY": []}
+        
+        for sensor in results:
+            state = sensor.get_state_name()
+            self.group_data[state].append(sensor)
+        
+        # Display grouped table
+        self.__display_grouped_table()
+        
+        # Display alerts
+        self.__display_alerts()
+        
+        # Update summary
+        self.__update_summary(results)
+        
+        self.status_lbl.config(text="Analysis complete. 3000 sensors processed.")
+        self.run_btn.config(state="normal", text="RUN ANALYSIS")
+        self.running = False
+
+    def __display_alerts(self):
+        """Show critical alerts at top."""
+        self.alert_text.config(state="normal")
+        self.alert_text.delete(1.0, tk.END)
+        
+        alert_count = len(self.group_data["ALERT"])
+        if alert_count > 0:
+            alert_zones = set()
+            for sensor in self.group_data["ALERT"][:10]:  # Show first 10
+                alert_zones.add(sensor.get_zone())
+            
+            zones_str = ", ".join(sorted(alert_zones)[:5])
+            self.alert_text.insert(tk.END, f"  {alert_count} sensors in CRITICAL state\n")
+            self.alert_text.insert(tk.END, f"  Affected zones: {zones_str}\n")
+            self.alert_text.insert(tk.END, f"  ACTION REQUIRED: Review Alert group below for details")
+        else:
+            self.alert_text.insert(tk.END, "  No critical alerts. All systems operating normally.")
+        
+        self.alert_text.config(state="disabled")
+
+    def __display_grouped_table(self):
+        """Display table with collapsible status groups."""
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
+        
+        # Display each group in order: ALERT, WARNING, NORMAL, FAULTY
+        for status in ["ALERT", "WARNING", "NORMAL", "FAULTY"]:
+            sensors = self.group_data[status]
+            self.__create_group_header(status, len(sensors))
+            
+            if self.expanded_groups[status]:
+                self.__create_group_table(status, sensors)
+
+    def __create_group_header(self, status, count):
+        """Create collapsible group header."""
+        color = self.GROUP_COLORS[status]
+        is_expanded = self.expanded_groups[status]
+        arrow = "▼" if is_expanded else "►"
+        
+        header = tk.Frame(self.scrollable_frame, bg=color, relief="solid", bd=1)
+        header.pack(fill="x", pady=(5, 0), padx=0)
+        
+        def toggle_group():
+            self.expanded_groups[status] = not self.expanded_groups[status]
+            self.__display_grouped_table()
+        
+        tk.Button(
+            header,
+            text=f"  {arrow}  {status}  ({count} sensors)",
+            font=("Arial", 11, "bold"),
+            fg="white", bg=color,
+            anchor="w",
+            relief="flat",
+            cursor="hand2",
+            command=toggle_group
+        ).pack(fill="x", padx=10, pady=8)
+
+    def __create_group_table(self, status, sensors):
+        """Create table rows for a status group."""
+        # Table header
+        header_frame = tk.Frame(self.scrollable_frame, bg="#333", height=30)
+        header_frame.pack(fill="x", padx=0)
+        
+        for col, width in [("Sensor ID", 100), ("Zone", 150), ("Type", 100), 
+                           ("Reading", 100), ("State", 80), ("Assessment", 300)]:
+            tk.Label(
+                header_frame,
+                text=col,
+                font=("Helvetica", 9, "bold"),
+                fg="white", bg="#333",
+                width=width//8,
+                anchor="w",
+                padx=5
+            ).pack(side="left", fill="both", expand=True)
+        
+        # Table rows
+        for sensor in sensors[:50]:  # Limit display to 50 rows per group for performance
+            row_frame = tk.Frame(self.scrollable_frame, bg=self.ROW_COLORS[status], height=25)
+            row_frame.pack(fill="x", padx=0)
+            
+            tk.Label(row_frame, text=sensor.get_sensor_id(), font=("Courier", 8), 
+                    bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+            tk.Label(row_frame, text=sensor.get_zone(), font=("Courier", 8),
+                    bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+            tk.Label(row_frame, text=sensor.get_type(), font=("Courier", 8),
+                    bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+            tk.Label(row_frame, text=f"{sensor.get_reading():.2f} {sensor.get_unit()}", 
+                    font=("Courier", 8), bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+            tk.Label(row_frame, text=sensor.get_state_name(), font=("Courier", 8),
+                    bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+            tk.Label(row_frame, text=sensor.get_assessment()[:40], font=("Courier", 8),
+                    bg=self.ROW_COLORS[status], anchor="w", padx=5).pack(side="left", fill="both", expand=True)
+        
+        # "Show more" if truncated
+        if len(sensors) > 50:
+            more_frame = tk.Frame(self.scrollable_frame, bg="#f0f0f0")
+            more_frame.pack(fill="x", padx=0)
+            tk.Label(more_frame, text=f"  ... and {len(sensors)-50} more {status} sensors",
+                    font=("Helvetica", 9, "italic"), fg="#666", bg="#f0f0f0", anchor="w").pack(fill="x", padx=10, pady=3)
+
+    def __update_summary(self, results):
+        """Update KPI footer."""
+        alerts = len([s for s in results if s.get_state_name() == "ALERT"])
+        warnings = len([s for s in results if s.get_state_name() == "WARNING"])
+        normal = len([s for s in results if s.get_state_name() == "NORMAL"])
+        faulty = len([s for s in results if s.get_state_name() == "FAULTY"])
+        
+        moist = [s for s in results if s.get_type() == "MOISTURE" and s.get_state_name() != "FAULTY"]
+        avg_m = sum(s.get_reading() for s in moist) / len(moist) if moist else 0
+        
+        self.lbl_total.config(text=f"Total Sensors : {len(results)}")
+        self.lbl_alerts.config(text=f"Alerts : {alerts}")
+        self.lbl_warnings.config(text=f"Warnings : {warnings}")
+        self.lbl_normal.config(text=f"Normal : {normal}")
+        self.lbl_faulty.config(text=f"Faulty : {faulty}")
+        self.lbl_moisture.config(text=f"Avg Moisture : {avg_m:.3f} VWC")
+
     def __clear_table(self):
-        for row in self.table.get_children():
-            self.table.delete(row)
+        """Clear table display."""
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
 
     def __reset_summary(self):
-        self.lbl_total.config(   text="Total Sensors : —")
-        self.lbl_alerts.config(  text="Alerts : —")
+        """Reset summary labels."""
+        self.lbl_total.config(text="Total Sensors : —")
+        self.lbl_alerts.config(text="Alerts : —")
         self.lbl_warnings.config(text="Warnings : —")
-        self.lbl_normal.config(  text="Normal : —")
-        self.lbl_faulty.config(  text="Faulty : —")
+        self.lbl_normal.config(text="Normal : —")
+        self.lbl_faulty.config(text="Faulty : —")
         self.lbl_moisture.config(text="Avg Moisture : —")
+
+
+def add_control_buttons(dashboard):
+    """Add control buttons to the dashboard."""
+    frame = tk.Frame(dashboard.root, bg="#eceff1", pady=10)
+    frame.pack(fill="x", side="bottom")
+
+    dashboard.run_btn = tk.Button(
+        frame,
+        text="RUN ANALYSIS",
+        font=("Helvetica", 11, "bold"),
+        bg="#27ae60", fg="white",
+        activebackground="#1e8449",
+        relief="flat", padx=20, pady=6,
+        cursor="hand2",
+        command=lambda: dashboard._FarmDashboard__on_run_clicked()
+    )
+    dashboard.run_btn.pack(side="left", padx=(0, 8))
+
+    tk.Button(
+        frame,
+        text="CLEAR",
+        font=("Helvetica", 11),
+        bg="#c0392b", fg="white",
+        activebackground="#a93226",
+        relief="flat", padx=20, pady=6,
+        cursor="hand2",
+        command=lambda: dashboard._FarmDashboard__on_clear_clicked()
+    ).pack(side="left")
+
+    dashboard.status_lbl = tk.Label(
+        frame,
+        text="Ready. Press RUN ANALYSIS to start.",
+        font=("Helvetica", 10),
+        fg="#7f8c8d", bg="#eceff1"
+    )
+    dashboard.status_lbl.pack(side="left", padx=16)
 
 
 if __name__ == "__main__":

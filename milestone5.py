@@ -1,6 +1,9 @@
 import threading
 import time
 from enum import Enum
+from kaggle_loader import load_kaggle_sensors
+import csv
+from datetime import datetime
 
 # >>> ENUMERATIONS: Replace raw strings with fixed set of valid states
 # >>> SensorState enum catches invalid states immediately as errors
@@ -170,38 +173,40 @@ def apply_filter(results, filter_func):
 
 
 if __name__ == "__main__":
-    print("=" * 65)
+    print("-" * 65)
     print("  SENSOR DATA PROCESSING SYSTEM — MILESTONE 5")
-    print("  Concurrency & Advanced Computation")
-    print("=" * 65)
+    print("   INTEGRATED WITH KAGGLE DATASET (1000 records × 3 sensor types)")
+    print("-" * 65)
 
+    # >>> KAGGLE INTEGRATION: Load real agricultural sensor data
+    # >>> 1000 Kaggle records × 3 sensor types = 3000 concurrent threads
+    print("\n  Loading the dataset...")
+    kaggle_sensor_data = load_kaggle_sensors(limit=1000)
+    
+    if not kaggle_sensor_data:
+        print("  [ERROR] Failed to load Kaggle dataset. Exiting.")
+        exit(1)
+
+    # Convert Kaggle sensor data into thread objects
     sensor_threads = [
-        Sensor("SNS-M01", "North Field A",    SensorType.MOISTURE,    0.32, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M02", "North Field B",    SensorType.MOISTURE,    0.15, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M03", "East Greenhouse",  SensorType.MOISTURE,    0.61, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M04", "East Orchard",     SensorType.MOISTURE,    0.44, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M05", "Central Paddock",  SensorType.MOISTURE,    0.72, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M06", "Central Nursery",  SensorType.MOISTURE,    0.28, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M07", "West Cropland",    SensorType.MOISTURE,    0.53, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M08", "West Pasture",     SensorType.MOISTURE,    0.81, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M09", "South Wetland",    SensorType.MOISTURE,    0.13, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-M10", "South Dryland",    SensorType.MOISTURE,    1.45, "VWC", "2024-05-01 06:00"),
-        Sensor("SNS-T01", "North Field A",    SensorType.TEMPERATURE, 24.3, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-T02", "East Greenhouse",  SensorType.TEMPERATURE, 22.1, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-T03", "Central Paddock",  SensorType.TEMPERATURE, 31.7, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-T04", "West Cropland",    SensorType.TEMPERATURE, 36.8, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-T05", "South Wetland",    SensorType.TEMPERATURE, 28.4, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-T06", "South Dryland",    SensorType.TEMPERATURE, 38.5, "°C",  "2024-05-01 06:00"),
-        Sensor("SNS-P01", "North Field A",    SensorType.PH,          6.2,  "pH",  "2024-05-01 06:00"),
-        Sensor("SNS-P02", "East Orchard",     SensorType.PH,          4.8,  "pH",  "2024-05-01 06:00"),
-        Sensor("SNS-P03", "Central Nursery",  SensorType.PH,          7.1,  "pH",  "2024-05-01 06:00"),
-        Sensor("SNS-P04", "West Cropland",    SensorType.PH,          5.9,  "pH",  "2024-05-01 06:00"),
-        Sensor("SNS-P05", "South Dryland",    SensorType.PH,          8.1,  "pH",  "2024-05-01 06:00"),
+        Sensor(
+            s["sensor_id"],
+            s["zone"],
+            SensorType[s["sensor_type"]],
+            s["reading"],
+            s["unit"],
+            s["timestamp"]
+        )
+        for s in kaggle_sensor_data
     ]
 
     print(f"\n  Starting {len(sensor_threads)} sensor threads concurrently...\n")
-    print(f"  {'STATE':<9} {'ID':<10} {'ZONE':<21} {'READING':<12} ASSESSMENT")
-    print(f"  {'-'*8} {'-'*9} {'-'*20} {'-'*11} {'-'*30}")
+    
+    # Clear global results list for fresh run
+    results_list.clear()
+    
+    print(f"  {'STATE':<9} {'ID':<15} {'ZONE':<25} {'READING':<12} ASSESSMENT")
+    print(f"  {'-'*8} {'-'*14} {'-'*24} {'-'*11} {'-'*30}")
 
     for sensor in sensor_threads:
         sensor.start()
@@ -213,9 +218,9 @@ if __name__ == "__main__":
 
     print(f"\n  All {len(sensor_threads)} sensor threads completed.\n")
 
-    print("=" * 65)
+    print("-" * 65)
     print("  LAMBDA-BASED RESULTS FILTERING")
-    print("=" * 65)
+    print("-" * 65)
 
     alerts = apply_filter(
         results_list,
@@ -223,7 +228,7 @@ if __name__ == "__main__":
     )
     print(f"\n  [Lambda 1] Sensors in ALERT state: {len(alerts)}")
     for r in alerts:
-        print(f"    → {r['sensor_id']} | {r['zone']} | {r['assessment']}")
+        print(f"    * {r['sensor_id']} | {r['zone']} | {r['assessment']}")
 
     warnings = apply_filter(
         results_list,
@@ -231,7 +236,7 @@ if __name__ == "__main__":
     )
     print(f"\n  [Lambda 2] Sensors in WARNING state: {len(warnings)}")
     for r in warnings:
-        print(f"    → {r['sensor_id']} | {r['zone']} | {r['assessment']}")
+        print(f"    * {r['sensor_id']} | {r['zone']} | {r['assessment']}")
 
     faulty = apply_filter(
         results_list,
@@ -239,7 +244,7 @@ if __name__ == "__main__":
     )
     print(f"\n  [Lambda 3] Faulty sensors detected: {len(faulty)}")
     for r in faulty:
-        print(f"    → {r['sensor_id']} | {r['zone']} | {r['assessment']}")
+        print(f"    * {r['sensor_id']} | {r['zone']} | {r['assessment']}")
 
     normal_moisture = apply_filter(
         results_list,
@@ -247,7 +252,7 @@ if __name__ == "__main__":
     )
     print(f"\n  [Lambda 4] Moisture sensors at OPTIMAL level: {len(normal_moisture)}")
     for r in normal_moisture:
-        print(f"    → {r['sensor_id']} | {r['zone']} | Reading: {r['reading']} VWC")
+        print(f"    * {r['sensor_id']} | {r['zone']} | Reading: {r['reading']} VWC")
 
     moisture_results = apply_filter(
         results_list,
@@ -257,9 +262,25 @@ if __name__ == "__main__":
         avg_moisture = sum(r["reading"] for r in moisture_results) / len(moisture_results)
         print(f"\n  [Lambda 5] Average moisture (valid sensors): {avg_moisture:.3f} VWC")
 
-    print(f"\n{'=' * 65}")
+    # >>> CSV EXPORT FOR POWER BI
+    # >>> Export all results to CSV for external analytics and visualization
+    csv_filename = "sensor_output.csv"
+    try:
+        with open(csv_filename, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=["sensor_id", "zone", "type", "reading", "unit", "state", "assessment", "timestamp"]
+            )
+            writer.writeheader()
+            writer.writerows(results_list)
+        
+        print(f"\n  [CSV EXPORT] Results exported to {csv_filename} ({len(results_list)} records)")
+    except Exception as e:
+        print(f"\n  [CSV EXPORT ERROR] Failed to export: {e}")
+
+    print(f"\n{'-' * 65}")
     print("  MILESTONE 5 — CONCURRENT SYSTEM SUMMARY")
-    print(f"{'=' * 65}")
+    print(f"{'-' * 65}")
     print(f"  Total threads run     : {len(sensor_threads)}")
     print(f"  Results collected     : {len(results_list)}")
     print(f"  ALERT sensors         : {len(alerts)}")
@@ -269,5 +290,4 @@ if __name__ == "__main__":
     print(f"\n  Enum states used      : {[s.name for s in SensorState]}")
     print(f"  Synchronization locks : results_lock, print_lock, log_lock")
     print(f"  Lambda filters applied: 5")
-    print(f"\n  [Milestone 5 Complete]")
-    print("=" * 65)
+    print("-" * 65)
